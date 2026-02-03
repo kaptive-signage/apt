@@ -24,6 +24,66 @@ GPG_KEY_ID="${1:?Usage: $0 <gpg-key-id>}"
 # --- Helpers ---
 die() { echo "ERROR: $*" >&2; exit 1; }
 
+# --- Generate directory listing HTML ---
+generate_index_html() {
+    local dir="$1"
+    local rel_path="${dir#"${PUBLIC_DIR}"}"
+    rel_path="${rel_path:-/}"
+
+    local html="${dir}/index.html"
+    cat > "$html" <<HEADER
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Index of ${rel_path}</title>
+<style>
+  body { font-family: monospace; margin: 2em; }
+  h1 { font-size: 1.2em; }
+  table { border-collapse: collapse; }
+  td { padding: 0.2em 1em; }
+  a { text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<h1>Index of ${rel_path}</h1>
+<table>
+HEADER
+
+    # Parent directory link
+    if [[ "$rel_path" != "/" ]]; then
+        echo '<tr><td><a href="../">../</a></td><td></td><td></td></tr>' >> "$html"
+    fi
+
+    # List directories first, then files
+    for entry in "$dir"/*/; do
+        [[ -d "$entry" ]] || continue
+        local name
+        name="$(basename "$entry")/"
+        echo "<tr><td><a href=\"${name}\">${name}</a></td><td></td><td></td></tr>" >> "$html"
+    done
+
+    for entry in "$dir"/*; do
+        [[ -f "$entry" ]] || continue
+        local name size
+        name="$(basename "$entry")"
+        [[ "$name" == "index.html" ]] && continue
+        size=$(wc -c < "$entry" | tr -d ' ')
+        echo "<tr><td><a href=\"${name}\">${name}</a></td><td>${size}</td></tr>" >> "$html"
+    done
+
+    cat >> "$html" <<FOOTER
+</table>
+</body>
+</html>
+FOOTER
+
+    # Recurse into subdirectories
+    for entry in "$dir"/*/; do
+        [[ -d "$entry" ]] || continue
+        generate_index_html "$entry"
+    done
+}
+
 # --- Build kaptive metapackage ---
 build_metapackage() {
     local tmp_dir deps_list=""
@@ -145,6 +205,10 @@ EOF
 
     # Export public key for clients
     gpg --armor --export "$GPG_KEY_ID" > "${PUBLIC_DIR}/key.gpg.asc"
+
+    # Generate directory listings
+    echo "==> Generating directory listings"
+    generate_index_html "$PUBLIC_DIR"
 
     echo ""
     echo "Done. public/ directory ready for deployment."

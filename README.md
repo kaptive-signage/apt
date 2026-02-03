@@ -1,6 +1,6 @@
 # Kaptive APT Repository
 
-APT package repository for Kaptive components, served via GitHub Pages.
+APT package repository for Kaptive components.
 
 Installing the `kaptive` metapackage pulls in all available Kaptive components.
 
@@ -20,19 +20,12 @@ sudo apt-get install kaptive
 
 ## Publishing packages
 
-1. Copy your `.deb` files into `pool/main/`.
+1. Copy `.deb` files into `pool/main/`.
 2. Commit and push to `main`.
-
-```bash
-cp my-package.deb pool/main/
-git add pool/main/my-package.deb
-git commit -m "Add my-package"
-git push
-```
 
 The GitHub Action will automatically rebuild the repository metadata, generate the `kaptive` metapackage, and deploy to GitHub Pages.
 
-## Repository setup (one-time)
+## Repository setup
 
 ### GitHub Pages
 
@@ -53,10 +46,4 @@ If you don't have one yet:
 
 ```bash
 gpg --full-generate-key
-```
-
-Select RSA 4096-bit, no expiration (or set as needed). Then export the private key for the CI secret:
-
-```bash
-gpg --armor --export-secret-keys <key-id>
 ```
