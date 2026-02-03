@@ -8,7 +8,7 @@ ARCH="arm64"
 ORIGIN="Kaptive"
 LABEL="Kaptive"
 DESCRIPTION="Kaptive APT Repository"
-METAPKG_NAME="kaptive"
+METAPKG_NAME="kaptive-signage"
 METAPKG_DESCRIPTION="Metapackage that installs all Kaptive components"
 METAPKG_MAINTAINER="Kaptive <info@kaptive.ch>"
 
@@ -151,7 +151,7 @@ main() {
     # Remove stale metapackage before rebuilding
     rm -f "${POOL_DIR}/${METAPKG_NAME}.deb"
 
-    echo "==> Building kaptive metapackage"
+    echo "==> Building kaptive-signage metapackage"
     build_metapackage
 
     # Prepare public directory
