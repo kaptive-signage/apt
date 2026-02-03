@@ -20,10 +20,12 @@ sudo apt-get install kaptive-signage
 
 ## Publishing packages
 
-1. Copy `.deb` files into `pool/main/`.
-2. Commit and push to `main`.
+1. Copy `.deb` files into `pool/main/` and commit.
+2. Bump the version in the `VERSION` file, commit and push to `main`.
 
-The GitHub Action will automatically rebuild the repository metadata, generate the `kaptive-signage` metapackage, and deploy to GitHub Pages.
+The GitHub Action triggers **only** when `VERSION` changes. This ensures each published version has a consistent set of packages. The action rebuilds the repository metadata, generates the `kaptive-signage` metapackage with the version from `VERSION`, and deploys to GitHub Pages.
+
+You can also trigger a rebuild manually from **Actions > Update APT Repository > Run workflow**.
 
 ## Repository setup
 

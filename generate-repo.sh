@@ -105,9 +105,12 @@ build_metapackage() {
 
     echo "Metapackage dependencies: ${deps_list}"
 
-    # Determine version from current date
+    # Read version from VERSION file
     local version
-    version="$(date +%Y.%m.%d)"
+    version="$(tr -d '[:space:]' < "${REPO_DIR}/VERSION")"
+    if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        die "Invalid version '${version}' in VERSION file. Expected semver (e.g. 1.0.0)."
+    fi
 
     tmp_dir=$(mktemp -d)
     mkdir -p "${tmp_dir}/DEBIAN"
