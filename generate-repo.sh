@@ -80,7 +80,7 @@ FOOTER
     # Recurse into subdirectories
     for entry in "$dir"/*/; do
         [[ -d "$entry" ]] || continue
-        generate_index_html "$entry"
+        generate_index_html "${entry%/}"
     done
 }
 
