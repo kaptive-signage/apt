@@ -123,10 +123,11 @@ Priority: optional
 Description: ${METAPKG_DESCRIPTION}
 EOF
 
-    dpkg-deb --build "$tmp_dir" "${POOL_DIR}/${METAPKG_NAME}.deb"
+    local deb_name="${METAPKG_NAME}_${version}_${ARCH}.deb"
+    dpkg-deb --build "$tmp_dir" "${POOL_DIR}/${deb_name}"
     rm -rf "$tmp_dir"
 
-    echo "Built ${METAPKG_NAME}.deb (version ${version})"
+    echo "Built ${deb_name} (version ${version})"
 }
 
 # --- Main ---
@@ -149,7 +150,7 @@ main() {
     fi
 
     # Remove stale metapackage before rebuilding
-    rm -f "${POOL_DIR}/${METAPKG_NAME}.deb"
+    rm -f "${POOL_DIR}/${METAPKG_NAME}_"*.deb
 
     echo "==> Building kaptive-signage metapackage"
     build_metapackage
