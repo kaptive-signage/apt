@@ -28,7 +28,7 @@ die() { echo "ERROR: $*" >&2; exit 1; }
 generate_index_html() {
     local dir="$1"
     local rel_path="${dir#"${PUBLIC_DIR}"}"
-    rel_path="${rel_path:-/}"
+    rel_path="/${rel_path#/}"
 
     local html="${dir}/index.html"
     cat > "$html" <<HEADER
