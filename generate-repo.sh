@@ -3,7 +3,6 @@ set -euo pipefail
 
 # --- Configuration ---
 COMPONENT="main"
-ARCH="arm64"
 ORIGIN="Kaptive"
 LABEL="Kaptive"
 DESCRIPTION="Kaptive APT Repository"
@@ -18,6 +17,14 @@ GPG_KEY_ID="${1:?Usage: $0 <gpg-key-id>}"
 
 # --- Helpers ---
 die() { echo "ERROR: $*" >&2; exit 1; }
+
+# Architecture of a distribution (arm64 unless listed here)
+arch_for() {
+    case "$1" in
+        trixie-amd64) echo "amd64" ;;
+        *)            echo "arm64" ;;
+    esac
+}
 
 # --- Discover distributions ---
 # A distribution is any root-level directory containing a VERSION file.
@@ -96,7 +103,8 @@ FOOTER
 build_metapackage() {
     local dist="$1"
     local pool_dir="${REPO_DIR}/${dist}/pool/${COMPONENT}"
-    local tmp_dir deps_list=""
+    local arch tmp_dir deps_list=""
+    arch="$(arch_for "$dist")"
 
     # Collect package names from all .deb files in the pool (excluding the metapackage itself)
     for deb in "${pool_dir}"/*.deb; do
@@ -128,7 +136,7 @@ build_metapackage() {
     cat > "${tmp_dir}/DEBIAN/control" <<EOF
 Package: ${METAPKG_NAME}
 Version: ${version}
-Architecture: ${ARCH}
+Architecture: ${arch}
 Maintainer: ${METAPKG_MAINTAINER}
 Depends: ${deps_list}
 Section: metapackages
@@ -136,7 +144,7 @@ Priority: optional
 Description: ${METAPKG_DESCRIPTION}
 EOF
 
-    local deb_name="${METAPKG_NAME}_${version}_${ARCH}.deb"
+    local deb_name="${METAPKG_NAME}_${version}_${arch}.deb"
     dpkg-deb --build "$tmp_dir" "${pool_dir}/${deb_name}"
     rm -rf "$tmp_dir"
 
@@ -148,10 +156,12 @@ build_distribution() {
     local dist="$1"
     local pool_dir="${REPO_DIR}/${dist}/pool/${COMPONENT}"
     local dists_dir="${PUBLIC_DIR}/dists/${dist}"
-    local binary_dir="${dists_dir}/${COMPONENT}/binary-${ARCH}"
+    local arch
+    arch="$(arch_for "$dist")"
+    local binary_dir="${dists_dir}/${COMPONENT}/binary-${arch}"
     local public_pool="${PUBLIC_DIR}/pool/${dist}/${COMPONENT}"
 
-    echo "==> Building distribution: ${dist}"
+    echo "==> Building distribution: ${dist} (${arch})"
 
     # Check for .deb files (excluding any prior metapackage)
     shopt -s nullglob
@@ -174,7 +184,7 @@ build_distribution() {
 
     # Generate Packages index
     echo "  Generating Packages index"
-    (cd "$PUBLIC_DIR" && dpkg-scanpackages --arch "$ARCH" "pool/${dist}/${COMPONENT}" /dev/null) > "${binary_dir}/Packages"
+    (cd "$PUBLIC_DIR" && dpkg-scanpackages --arch "$arch" "pool/${dist}/${COMPONENT}" /dev/null) > "${binary_dir}/Packages"
     gzip -9c "${binary_dir}/Packages" > "${binary_dir}/Packages.gz"
 
     local pkg_count
@@ -199,16 +209,16 @@ Origin: ${ORIGIN}
 Label: ${LABEL}
 Suite: ${dist}
 Codename: ${dist}
-Architectures: ${ARCH}
+Architectures: ${arch}
 Components: ${COMPONENT}
 Description: ${DESCRIPTION}
 Date: $(date -Ru)
 MD5Sum:
- ${packages_md5} ${packages_size} ${COMPONENT}/binary-${ARCH}/Packages
- ${packages_gz_md5} ${packages_gz_size} ${COMPONENT}/binary-${ARCH}/Packages.gz
+ ${packages_md5} ${packages_size} ${COMPONENT}/binary-${arch}/Packages
+ ${packages_gz_md5} ${packages_gz_size} ${COMPONENT}/binary-${arch}/Packages.gz
 SHA256:
- ${packages_sha256} ${packages_size} ${COMPONENT}/binary-${ARCH}/Packages
- ${packages_gz_sha256} ${packages_gz_size} ${COMPONENT}/binary-${ARCH}/Packages.gz
+ ${packages_sha256} ${packages_size} ${COMPONENT}/binary-${arch}/Packages
+ ${packages_gz_sha256} ${packages_gz_size} ${COMPONENT}/binary-${arch}/Packages.gz
 EOF
 
     # Sign
@@ -253,7 +263,7 @@ main() {
     echo "--- Client setup ---"
     echo "  curl -fsSL https://<owner>.github.io/kaptive-apt-repo/key.gpg.asc | sudo gpg --dearmor -o /usr/share/keyrings/kaptive.gpg"
     for dist in "${distributions[@]}"; do
-        echo "  echo 'deb [arch=${ARCH} signed-by=/usr/share/keyrings/kaptive.gpg] https://<owner>.github.io/kaptive-apt-repo ${dist} ${COMPONENT}' | sudo tee /etc/apt/sources.list.d/kaptive.list"
+        echo "  echo 'deb [arch=$(arch_for "$dist") signed-by=/usr/share/keyrings/kaptive.gpg] https://<owner>.github.io/kaptive-apt-repo ${dist} ${COMPONENT}' | sudo tee /etc/apt/sources.list.d/kaptive.list"
     done
     echo "  sudo apt-get update && sudo apt-get install ${METAPKG_NAME}"
 }

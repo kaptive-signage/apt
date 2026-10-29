@@ -10,8 +10,9 @@ Installing the `kaptive-signage` metapackage pulls in all available Kaptive comp
 # Import the signing key
 curl -fsSL https://kaptive-signage.github.io/apt/key.gpg.asc | sudo gpg --dearmor -o /usr/share/keyrings/kaptive.gpg
 
-# Add the repository (replace DIST with your distribution, e.g. bookworm)
-echo 'deb [arch=arm64 signed-by=/usr/share/keyrings/kaptive.gpg] https://kaptive-signage.github.io/apt DIST main' | sudo tee /etc/apt/sources.list.d/kaptive.list
+# Add the repository (replace DIST with your distribution, e.g. trixie, and ARCH with
+# its architecture: amd64 for trixie-amd64, arm64 for all others)
+echo 'deb [arch=ARCH signed-by=/usr/share/keyrings/kaptive.gpg] https://kaptive-signage.github.io/apt DIST main' | sudo tee /etc/apt/sources.list.d/kaptive.list
 
 # Install
 sudo apt-get update
@@ -32,6 +33,8 @@ bookworm-staging/      # (example — add when needed)
 ```
 
 To add a new distribution, create a folder with a `VERSION` file and a `pool/main/` directory containing your `.deb` files.
+
+Distributions are published as arm64 by default. Distributions for other architectures (currently `trixie-amd64`) are listed in `arch_for` in `generate-repo.sh`.
 
 ## Publishing packages
 
